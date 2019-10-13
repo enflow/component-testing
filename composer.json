@@ -1,0 +1,27 @@
+{
+    "name": "enflow/component-testing",
+    "description": "Testing helper package by Enflow",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michel Bardelmeijer",
+            "email": "michel@enflow.nl"
+        }
+    ],
+    "require": {
+        "php": "^7.3",
+        "laravel/framework": ">=5.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Enflow\\Component\\Testing\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Enflow\\Component\\Testing\\TestingServiceProvider"
+            ]
+        }
+    }
+}
