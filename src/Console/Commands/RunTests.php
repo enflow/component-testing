@@ -9,8 +9,6 @@ class RunTests extends Command
 {
     protected $signature = 'test';
     protected $description = 'Runs the test scripts for the project where component-testing is installed';
-    /** @var Process */
-    private $server;
 
     public function handle()
     {
@@ -18,8 +16,9 @@ class RunTests extends Command
             if (file_exists(base_path('tests/Browser'))) {
                 $this->script("php artisan dusk:chrome-driver");
 
-                $this->server = new Process("php -S 0.0.0.0:8000 -t public 2>/dev/null");
-                $this->server->start();
+                $output = [];
+                exec("php -S 0.0.0.0:8000 -t public >/dev/null 2>&1 & echo $!", $output);
+                $serverPid = (int)$output[0] ?? null;
             }
 
             touch(base_path('database/database.sqlite'));
@@ -32,7 +31,9 @@ class RunTests extends Command
                 $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure");
             }
         } finally {
-            optional($this->server)->stop();
+            if ($serverPid) {
+                exec('kill ' . $serverPid);
+            }
         }
     }
 
