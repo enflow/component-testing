@@ -39,8 +39,12 @@ class RunTests extends Command
     private function script(string $script)
     {
         $process = Process::fromShellCommandline($script, base_path());
-        $process->setTty(true);
+        if (Process::isTtySupported()) {
+            $process->setTty(true);
+        }
         $process->setTimeout(300);
-        $process->mustRun();
+        $process->mustRun(function ($type, $line) {
+            $this->output->write($line);
+        });
     }
 }
