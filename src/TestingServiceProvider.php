@@ -9,7 +9,7 @@ class TestingServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->commands([
-            // Console\Commands\RunTests::class,
+            Console\Commands\RunTests::class,
         ]);
     }
 }
