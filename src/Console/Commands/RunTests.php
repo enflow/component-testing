@@ -31,7 +31,7 @@ class RunTests extends Command
                 $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure");
             }
         } finally {
-            if ($serverPid) {
+            if (!empty($serverPid)) {
                 exec('kill ' . $serverPid);
             }
         }
