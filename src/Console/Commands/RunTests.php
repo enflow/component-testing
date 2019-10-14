@@ -35,6 +35,8 @@ class RunTests extends Command
                 exec('kill ' . $serverPid);
             }
         }
+
+        exit(0);
     }
 
     private function script(string $script)
@@ -44,8 +46,14 @@ class RunTests extends Command
             $process->setTty(true);
         }
         $process->setTimeout(300);
-        $process->mustRun(function ($type, $line) {
+        $process->run(function ($type, $line) {
             $this->output->write($line);
         });
+
+        $exitCode = $process->getExitCode();
+
+        if ($exitCode !== 0) {
+            exit($exitCode);
+        }
     }
 }
