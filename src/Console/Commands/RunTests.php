@@ -22,24 +22,24 @@ class RunTests extends Command
     private function runTests(): void
     {
         // Ensure the chrome driver is always running with the latest version
-        if ($this->runDuskTests()) {
+        if ($this->shouldRunDuskTests()) {
             $this->script("php artisan dusk:chrome-driver");
         }
 
         // Ensure that the database.sqlite file exists & clear it if it does
         touch(base_path('database/database.sqlite'));
 
-        $this->info("Running phpunit");
         $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure");
 
-        if ($this->runDuskTests()) {
-            $this->info("Running Dusk");
+        if ($this->shouldRunDuskTests()) {
             $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure");
         }
     }
 
     private function script(string $script): void
     {
+        $this->info("> " . $script);
+
         $process = Process::fromShellCommandline($script, base_path());
         $process->setTimeout(300);
 
@@ -59,12 +59,12 @@ class RunTests extends Command
         });
 
         // Only use background server for dusk tests
-        if ($this->runDuskTests()) {
+        if ($this->shouldRunDuskTests()) {
             BackgroundServer::start();
         }
     }
 
-    private function runDuskTests(): bool
+    private function shouldRunDuskTests(): bool
     {
         return file_exists(base_path('tests/Browser'));
     }
