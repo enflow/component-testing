@@ -2,7 +2,9 @@
 
 namespace Enflow\Component\Testing\Console\Commands;
 
+use Enflow\Component\Testing\BackgroundServer;
 use Illuminate\Console\Command;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class RunTests extends Command
@@ -12,48 +14,58 @@ class RunTests extends Command
 
     public function handle()
     {
-        try {
-            if (file_exists(base_path('tests/Browser'))) {
-                $this->script("php artisan dusk:chrome-driver");
+        $this->setupBackgroundServer();
 
-                $output = [];
-                exec("php -S 0.0.0.0:8000 -t public >/dev/null 2>&1 & echo $!", $output);
-                $serverPid = (int)$output[0] ?? null;
-            }
-
-            touch(base_path('database/database.sqlite'));
-
-            $this->info("Running phpunit");
-            $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure");
-
-            if (file_exists(base_path('tests/Browser'))) {
-                $this->info("Running Dusk");
-                $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure");
-            }
-        } finally {
-            if (!empty($serverPid)) {
-                exec('kill ' . $serverPid);
-            }
-        }
-
-        exit(0);
+        $this->runTests();
     }
 
-    private function script(string $script)
+    private function runTests(): void
+    {
+        // Ensure the chrome driver is always running with the latest version
+        if ($this->runDuskTests()) {
+            $this->script("php artisan dusk:chrome-driver");
+        }
+
+        // Ensure that the database.sqlite file exists & clear it if it does
+        touch(base_path('database/database.sqlite'));
+
+        $this->info("Running phpunit");
+        $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure");
+
+        if ($this->runDuskTests()) {
+            $this->info("Running Dusk");
+            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure");
+        }
+    }
+
+    private function script(string $script): void
     {
         $process = Process::fromShellCommandline($script, base_path());
+        $process->setTimeout(300);
+
         if (Process::isTtySupported()) {
             $process->setTty(true);
         }
-        $process->setTimeout(300);
-        $process->run(function ($type, $line) {
+
+        $process->mustRun(function ($type, $line) {
             $this->output->write($line);
         });
+    }
 
-        $exitCode = $process->getExitCode();
+    private function setupBackgroundServer(): void
+    {
+        register_shutdown_function(function () {
+            BackgroundServer::stop();
+        });
 
-        if ($exitCode !== 0) {
-            exit($exitCode);
+        // Only use background server for dusk tests
+        if ($this->runDuskTests()) {
+            BackgroundServer::start();
         }
+    }
+
+    private function runDuskTests(): bool
+    {
+        return file_exists(base_path('tests/Browser'));
     }
 }
