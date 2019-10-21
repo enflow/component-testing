@@ -2,6 +2,8 @@
 
 namespace Enflow\Component\Testing;
 
+use Exception;
+
 class BackgroundServer
 {
     private static $pid;
@@ -14,7 +16,7 @@ class BackgroundServer
         static::$pid = (int)$output[0] ?? null;
 
         if (empty(static::$pid)) {
-            throw new \Exception("Failed to start background testing server; no pid returned");
+            throw new Exception("Failed to start background testing server; no pid returned");
         }
     }
 
