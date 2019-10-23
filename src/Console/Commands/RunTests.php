@@ -23,7 +23,8 @@ class RunTests extends Command
     {
         // Ensure the chrome driver is always running with the latest version
         if ($this->shouldRunDuskTests()) {
-            $this->script("php artisan dusk:chrome-driver");
+            // Hardcoded as CI runs 77 instead of the latest 88 version
+            $this->script("php artisan dusk:chrome-driver 77");
         }
 
         // Ensure that the database.sqlite file exists & clear it if it does
