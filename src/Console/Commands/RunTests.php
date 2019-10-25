@@ -9,7 +9,7 @@ use Symfony\Component\Process\Process;
 
 class RunTests extends Command
 {
-    protected $signature = 'test';
+    protected $signature = 'test {--filter=}';
     protected $description = 'Runs the test scripts for the project where component-testing is installed';
 
     public function handle()
@@ -30,10 +30,12 @@ class RunTests extends Command
         // Ensure that the database.sqlite file exists & clear it if it does
         touch(base_path('database/database.sqlite'));
 
-        $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure");
+        $filter = ($filter = $this->option('filter')) ? "--filter={$filter}" : null;
+
+        $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure {$filter}");
 
         if ($this->shouldRunDuskTests()) {
-            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure");
+            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure {$filter}");
         }
     }
 
