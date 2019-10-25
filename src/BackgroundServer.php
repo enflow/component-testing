@@ -22,10 +22,13 @@ class BackgroundServer
 
     public static function stop()
     {
-        if (empty(static::$pid)) {
-            return;
+        if (static::isRunning()) {
+            exec('kill ' . static::$pid);
         }
+    }
 
-        exec('kill ' . static::$pid);
+    public static function isRunning(): bool
+    {
+        return !empty(static::$pid);
     }
 }

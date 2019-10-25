@@ -48,19 +48,28 @@ class RunTests extends Command
             $process->setTty(true);
         }
 
-        $process->mustRun(function ($type, $line) {
+        $process->run(function ($type, $line) {
             $this->output->write($line);
         });
+
+        if ($process->getExitCode() !== 0) {
+            exit($process->getExitCode());
+        }
     }
 
     private function setupBackgroundServer(): void
     {
         register_shutdown_function(function () {
-            BackgroundServer::stop();
+            if (BackgroundServer::isRunning()) {
+                $this->info("Stopping background server");
+                BackgroundServer::stop();
+            }
         });
 
         // Only use background server for dusk tests
         if ($this->shouldRunDuskTests()) {
+            $this->info("Starting background server");
+
             BackgroundServer::start();
         }
     }
