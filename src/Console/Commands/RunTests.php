@@ -4,8 +4,10 @@ namespace Enflow\Component\Testing\Console\Commands;
 
 use Enflow\Component\Testing\BackgroundServer;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Process\ExecutableFinder;
 
 class RunTests extends Command
 {
@@ -23,8 +25,13 @@ class RunTests extends Command
     {
         // Ensure the chrome driver is always running with the latest version
         if ($this->shouldRunDuskTests()) {
-            // Hardcoded as CI runs 77 instead of the latest 88 version
-            $this->script("php artisan dusk:chrome-driver 77");
+            $googleChrome = (new ExecutableFinder())->find('google-chrome');
+            $fullVersion = trim((new Process([$googleChrome, '--product-version']))->mustRun()->getOutput(), "\n");
+            $majorVersion = Arr::first(explode('.', $fullVersion));
+
+            $this->info("Chrome version {$fullVersion}");
+
+            $this->script("php artisan dusk:chrome-driver {$majorVersion}");
         }
 
         // Ensure that the database.sqlite file exists & clear it if it does
