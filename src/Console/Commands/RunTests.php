@@ -52,8 +52,9 @@ class RunTests extends Command
 
         $process = Process::fromShellCommandline($script, base_path(), [
             'APP_URL' => 'http://localhost:8000',
+            'APP_DOMAIN' => 'localhost:8000',
         ]);
-        $process->setTimeout(300);
+        $process->setTimeout(60 * 15);
 
         if (Process::isTtySupported()) {
             $process->setTty(true);
