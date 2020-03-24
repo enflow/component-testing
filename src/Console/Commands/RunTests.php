@@ -11,8 +11,8 @@ use Symfony\Component\Process\ExecutableFinder;
 
 class RunTests extends Command
 {
-    protected $signature = 'test {--filter=}';
-    protected $description = 'Runs the test scripts for the project where component-testing is installed';
+    protected $signature = 'run-tests {--filter=}';
+    protected $description = 'Runs the test scripts with a background server running for Dusk tests.';
 
     public function handle()
     {
