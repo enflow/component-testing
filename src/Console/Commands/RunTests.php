@@ -3,6 +3,7 @@
 namespace Enflow\Component\Testing\Console\Commands;
 
 use Enflow\Component\Testing\BackgroundServer;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Symfony\Component\Process\Exception\ProcessFailedException;
@@ -25,6 +26,10 @@ class RunTests extends Command
     {
         // Ensure the chrome driver is always running with the latest version
         if ($this->shouldRunDuskTests()) {
+            if (!file_exists(base_path('.env.dusk'))) {
+                throw new Exception(".env.dusk file is required.");
+            }
+
             $googleChrome = (new ExecutableFinder())->find('google-chrome');
             $fullVersion = trim((new Process([$googleChrome, '--product-version']))->mustRun()->getOutput(), "\n");
             $majorVersion = Arr::first(explode('.', $fullVersion));

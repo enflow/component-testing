@@ -11,9 +11,15 @@ class BackgroundServer
     public static function start()
     {
         $output = [];
-        exec("php -S 0.0.0.0:8000 -t public >/dev/null 2>&1 & echo $!", $output);
+        exec("env -i bash -l -c 'php -S 0.0.0.0:8000 -t public >/dev/null 2>&1 & echo $!'", $output);
 
         static::$pid = (int)$output[0] ?? null;
+
+        sleep(1); // TODO: implement a better way to see a php server startup failure
+
+        if (posix_getpgid(static::$pid) === false) {
+            static::$pid = null;
+        }
 
         if (empty(static::$pid)) {
             throw new Exception("Failed to start background testing server; no pid returned");
