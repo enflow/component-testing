@@ -44,21 +44,21 @@ class RunTests extends Command
 
         $filter = ($filter = $this->option('filter')) ? "--filter={$filter}" : null;
 
-        $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure {$filter}");
+        $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure --testdox {$filter}");
 
         if ($this->shouldRunDuskTests()) {
-            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure {$filter}");
+            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox {$filter}", [
+                'APP_URL' => 'http://localhost:8000',
+                'APP_DOMAIN' => 'localhost:8000',
+            ]);
         }
     }
 
-    private function script(string $script): void
+    private function script(string $script, array $env = []): void
     {
         $this->info("> " . $script);
 
-        $process = Process::fromShellCommandline($script, base_path(), [
-            'APP_URL' => 'http://localhost:8000',
-            'APP_DOMAIN' => 'localhost:8000',
-        ]);
+        $process = Process::fromShellCommandline($script, base_path(), $env);
         $process->setTimeout(60 * 15);
 
         if (Process::isTtySupported()) {
