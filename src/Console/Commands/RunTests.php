@@ -31,6 +31,10 @@ class RunTests extends Command
             }
 
             $googleChrome = (new ExecutableFinder())->find('google-chrome');
+            if (empty($googleChrome)) {
+                throw new Exception("Unable to find binary 'google-chrome'. Needed for Dusk tests.");
+            }
+
             $fullVersion = trim((new Process([$googleChrome, '--product-version']))->mustRun()->getOutput(), "\n");
             $majorVersion = Arr::first(explode('.', $fullVersion));
 
