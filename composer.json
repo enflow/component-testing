@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "php": "^7.3",
+        "php": "^7.4",
         "laravel/framework": ">=5.4",
         "ext-posix": "*"
     },

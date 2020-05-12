@@ -15,6 +15,8 @@ class RunTests extends Command
     protected $signature = 'run-tests {--filter=}';
     protected $description = 'Runs the test scripts with a background server running for Dusk tests.';
 
+    protected BackgroundServer $backgroundServer;
+
     public function handle()
     {
         $this->setupBackgroundServer();
@@ -81,9 +83,9 @@ class RunTests extends Command
     private function setupBackgroundServer(): void
     {
         register_shutdown_function(function () {
-            if (BackgroundServer::isRunning()) {
+            if ($this->backgroundServer) {
                 $this->info("Stopping background server");
-                BackgroundServer::stop();
+                $this->backgroundServer->stop();
             }
         });
 
@@ -91,7 +93,8 @@ class RunTests extends Command
         if ($this->shouldRunDuskTests()) {
             $this->info("Starting background server");
 
-            BackgroundServer::start();
+            $this->backgroundServer = new BackgroundServer();
+            $this->backgroundServer->start();
         }
     }
 

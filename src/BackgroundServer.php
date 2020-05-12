@@ -2,39 +2,70 @@
 
 namespace Enflow\Component\Testing;
 
-use Exception;
-
 class BackgroundServer
 {
-    private static $pid;
+    private $process;
 
-    public static function start()
+    public function start()
     {
-        $output = [];
-        exec("env -i bash -l -c 'php -S 0.0.0.0:8000 -t public >/dev/null 2>&1 & echo $!'", $output);
+        $pipes = [];
 
-        static::$pid = (int)$output[0] ?? null;
+        $this->process = proc_open("php -S 0.0.0.0:8000 -t public &", [
+            ['pipe', 'r'],
+            ['pipe', 'w'], // stdout
+            ['pipe', 'w'], // stderr
+        ], $pipes, getcwd(), $this->getEnv());
+    }
 
-        sleep(1); // TODO: implement a better way to see a php server startup failure
-
-        if (posix_getpgid(static::$pid) === false) {
-            static::$pid = null;
-        }
-
-        if (empty(static::$pid)) {
-            throw new Exception("Failed to start background testing server; no pid returned");
+    public function stop()
+    {
+        if (is_resource($this->process)) {
+            proc_close($this->process);
         }
     }
 
-    public static function stop()
+    protected function getEnv(): array
     {
-        if (static::isRunning()) {
-            exec('kill ' . static::$pid);
+        $envPairs = [];
+        foreach ($this->getDefaultEnv() as $k => $v) {
+            if (false !== $v && in_array($k, $this->envToPassthrough())) {
+                $envPairs[] = $k.'='.$v;
+            }
         }
+
+        return $envPairs;
     }
 
-    public static function isRunning(): bool
+    protected function getDefaultEnv(): array
     {
-        return !empty(static::$pid);
+        $env = [];
+
+        foreach ($_SERVER as $k => $v) {
+            if (\is_string($v) && false !== $v = getenv($k)) {
+                $env[$k] = $v;
+            }
+        }
+
+        foreach ($_ENV as $k => $v) {
+            if (\is_string($v)) {
+                $env[$k] = $v;
+            }
+        }
+
+        return $env;
+    }
+
+    private function envToPassthrough()
+    {
+        return [
+            'DB_CONNECTION',
+            'DB_HOST',
+            'DB_PORT',
+            'DB_DATABASE',
+            'DB_USERNAME',
+            'DB_PASSWORD',
+            'REDIS_HOST',
+            'REDIS_PORT',
+        ];
     }
 }
