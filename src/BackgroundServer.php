@@ -10,7 +10,7 @@ class BackgroundServer
     {
         $pipes = [];
 
-        $this->process = proc_open("php -S 0.0.0.0:8000 -t public &", [
+        $this->process = proc_open("php -S 0.0.0.0:8000 -t public", [
             ['pipe', 'r'],
             ['pipe', 'w'], // stdout
             ['pipe', 'w'], // stderr
@@ -19,8 +19,8 @@ class BackgroundServer
 
     public function stop()
     {
-        if (is_resource($this->process)) {
-            proc_close($this->process);
+        if ($this->process) {
+            proc_terminate($this->process);
         }
     }
 
