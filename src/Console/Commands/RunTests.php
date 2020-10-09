@@ -32,15 +32,9 @@ class RunTests extends Command
                 throw new Exception(".env.dusk file is required.");
             }
 
-            $googleChrome = (new ExecutableFinder())->find('google-chrome');
-            if (empty($googleChrome)) {
-                throw new Exception("Unable to find binary 'google-chrome'. Needed for Dusk tests.");
-            }
+            $majorVersion = trim((Process::fromShellCommandline('/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1'))->mustRun()->getOutput(), "\n");
 
-            $fullVersion = trim((new Process([$googleChrome, '--product-version']))->mustRun()->getOutput(), "\n");
-            $majorVersion = Arr::first(explode('.', $fullVersion));
-
-            $this->info("Chrome version {$fullVersion}");
+            $this->info("Chrome version {$majorVersion}");
 
             $this->script("php artisan dusk:chrome-driver {$majorVersion}");
         }
