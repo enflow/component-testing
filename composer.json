@@ -11,7 +11,8 @@
     "require": {
         "php": "^7.4",
         "laravel/framework": ">=5.4",
-        "ext-posix": "*"
+        "ext-posix": "*",
+        "ext-json": "*"
     },
     "autoload": {
         "psr-4": {

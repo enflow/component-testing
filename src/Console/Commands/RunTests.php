@@ -26,17 +26,39 @@ class RunTests extends Command
 
     private function runTests(): void
     {
+        // Dump out debug info
+
+        $this->info("Debug info\n" . json_encode([
+            'app' => Arr::only(config('app'), [
+                'name',
+                'env',
+                'url',
+            ]),
+            'database' => Arr::only(config('database.connections.' . config('database.default')), [
+                'driver',
+                'database',
+                'host',
+                'port',
+                'username',
+                'password',
+            ]),
+        ], JSON_PRETTY_PRINT));
+
+        $this->info("");
+
         // Ensure the chrome driver is always running with the latest version
         if ($this->shouldRunDuskTests()) {
-            if (!file_exists(base_path('.env.dusk'))) {
+            if (! file_exists(base_path('.env.dusk'))) {
                 throw new Exception(".env.dusk file is required.");
             }
 
             $majorVersion = trim((Process::fromShellCommandline('/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1'))->mustRun()->getOutput(), "\n");
 
-            $this->info("Chrome version {$majorVersion}");
+            $this->info("Upgrading Dusk Chrome Driver to {$majorVersion}");
 
             $this->script("php artisan dusk:chrome-driver {$majorVersion}");
+
+            $this->info("");
         }
 
         // Ensure that the database.sqlite file exists & clear it if it does
