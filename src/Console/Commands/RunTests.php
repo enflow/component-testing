@@ -15,7 +15,7 @@ class RunTests extends Command
     protected $signature = 'run-tests {--filter=}';
     protected $description = 'Runs the test scripts with a background server running for Dusk tests.';
 
-    protected BackgroundServer $backgroundServer;
+    protected ?BackgroundServer $backgroundServer = null;
 
     public function handle()
     {
@@ -27,24 +27,9 @@ class RunTests extends Command
     private function runTests(): void
     {
         // Dump out debug info
-
-        $this->info("Debug info\n" . json_encode([
-            'app' => Arr::only(config('app'), [
-                'name',
-                'env',
-                'url',
-            ]),
-            'database' => Arr::only(config('database.connections.' . config('database.default')), [
-                'driver',
-                'database',
-                'host',
-                'port',
-                'username',
-                'password',
-            ]),
-        ], JSON_PRETTY_PRINT));
-
-        $this->info("");
+        if ($this->getOutput()->isVerbose() || env('CI')) {
+            $this->dumpDebugInfo();
+        }
 
         // Ensure the chrome driver is always running with the latest version
         if ($this->shouldRunDuskTests()) {
@@ -117,5 +102,26 @@ class RunTests extends Command
     private function shouldRunDuskTests(): bool
     {
         return file_exists(base_path('tests/Browser'));
+    }
+
+    private function dumpDebugInfo()
+    {
+        $this->info("Debug info\n" . json_encode([
+                'app' => Arr::only(config('app'), [
+                    'name',
+                    'env',
+                    'url',
+                ]),
+                'database' => Arr::only(config('database.connections.' . config('database.default')), [
+                    'driver',
+                    'database',
+                    'host',
+                    'port',
+                    'username',
+                    'password',
+                ]),
+            ], JSON_PRETTY_PRINT));
+
+        $this->info("");
     }
 }
