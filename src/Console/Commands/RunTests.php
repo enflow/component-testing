@@ -12,7 +12,12 @@ use Symfony\Component\Process\ExecutableFinder;
 
 class RunTests extends Command
 {
-    protected $signature = 'run-tests {--filter=}';
+    protected $signature = 'run-tests 
+        {--filter= : filters classes or methods} 
+        {--repeat= : run tests specified number of times}
+        {--no-dusk : only executes phpunit tests}
+        {--only-dusk : skip phpunit tests}';
+
     protected $description = 'Runs the test scripts with a background server running for Dusk tests.';
 
     protected ?BackgroundServer $backgroundServer = null;
@@ -50,11 +55,14 @@ class RunTests extends Command
         touch(base_path('database/database.sqlite'));
 
         $filter = ($filter = $this->option('filter')) ? "--filter={$filter}" : null;
+        $repeat = ($repeat = $this->option('repeat')) ? "--repeat={$repeat}" : null;
 
-        $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure --testdox {$filter}");
+        if (!$this->option('only-dusk')) {
+            $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}");
+        }
 
         if ($this->shouldRunDuskTests()) {
-            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox {$filter}", [
+            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}", [
                 'APP_URL' => 'http://localhost:8000',
                 'APP_DOMAIN' => 'localhost:8000',
             ]);
@@ -101,6 +109,10 @@ class RunTests extends Command
 
     private function shouldRunDuskTests(): bool
     {
+        if ($this->option('no-dusk')) {
+            return false;
+        }
+
         return file_exists(base_path('tests/Browser'));
     }
 
