@@ -6,90 +6,35 @@ use Exception;
 
 class BackgroundServer
 {
-    private $process;
-    private $pipes = [];
+    private static $pid;
 
-    public function start()
+    public static function start()
     {
-        $this->process = proc_open("php -S 0.0.0.0:8000 -t public", [
-            ['pipe', 'r'],
-            ['pipe', 'w'], // stdout
-            ['pipe', 'w'], // stderr
-        ], $this->pipes, getcwd(), $this->getEnv());
+        $output = [];
+        exec("php -S 0.0.0.0:8000 -t public >/dev/null 2>&1 & echo $!", $output);
 
-        $status = proc_get_status($this->process);
-        if (empty($status['running'])) {
-            throw new Exception("PHP server must be running");
+        static::$pid = (int)$output[0] ?? null;
+
+        sleep(3); // TODO: implement a better way to see a php server startup failure
+
+        if (posix_getpgid(static::$pid) === false) {
+            static::$pid = null;
+        }
+
+        if (empty(static::$pid)) {
+            throw new Exception("Failed to start background testing server; no pid returned");
         }
     }
 
-    public function stop()
+    public static function stop()
     {
-        $status = proc_get_status($this->process);
-        if (empty($status['running'])) {
-            throw new Exception("PHP server must be running");
+        if (static::isRunning()) {
+            exec('kill ' . static::$pid);
         }
-
-        //close all pipes that are still open
-        fclose($this->pipes[1]); //stdout
-        fclose($this->pipes[2]); //stderr
-
-        //get the parent pid of the process we want to kill
-        $ppid = $status['pid'];
-
-        //use ps to get all the children of this process, and kill them
-        $pids = preg_split('/\s+/', `ps -o pid --no-heading --ppid $ppid`);
-        foreach ($pids as $pid) {
-            if (is_numeric($pid)) {
-                posix_kill($pid, 9); //9 is the SIGKILL signal
-            }
-        }
-
-        proc_close($this->process);
     }
 
-    protected function getEnv(): array
+    public static function isRunning(): bool
     {
-        $envPairs = [];
-        foreach ($this->getDefaultEnv() as $k => $v) {
-            if (false !== $v && in_array($k, $this->envToPassthrough())) {
-                $envPairs[] = $k . '=' . $v;
-            }
-        }
-
-        return $envPairs;
-    }
-
-    protected function getDefaultEnv(): array
-    {
-        $env = [];
-
-        foreach ($_SERVER as $k => $v) {
-            if (\is_string($v) && false !== $v = getenv($k)) {
-                $env[$k] = $v;
-            }
-        }
-
-        foreach ($_ENV as $k => $v) {
-            if (\is_string($v)) {
-                $env[$k] = $v;
-            }
-        }
-
-        return $env;
-    }
-
-    private function envToPassthrough()
-    {
-        return [
-            'DB_CONNECTION',
-            'DB_HOST',
-            'DB_PORT',
-            'DB_DATABASE',
-            'DB_USERNAME',
-            'DB_PASSWORD',
-            'REDIS_HOST',
-            'REDIS_PORT',
-        ];
+        return !empty(static::$pid);
     }
 }
