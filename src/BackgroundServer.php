@@ -23,28 +23,23 @@ class BackgroundServer
 
         $tries = 0;
         do {
-            // Sanity check
-            $ch = curl_init('http://127.0.0.1:8000');
-            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-            curl_exec($ch);
-            $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+            $isRunning = $this->isRunning();
 
             $tries++;
-        } while ($httpStatus !== 200 && $tries < 100);
+        } while ($isRunning === false && $tries < 100);
     }
 
     public function stop()
     {
-        $pid = `ps aux --no-headings | grep "0.0.0.0:8000" | grep -v grep | awk '{ print $2 }' | head -1`;
+        $pid = trim(`ps aux --no-headings | grep ":8000" | grep -v grep | awk '{ print $2 }' | head -1`, "\n");
 
         if (is_numeric($pid)) {
             posix_kill($pid, 9);
         }
 
-        $this->process->stop();
+        if ($this->process->isRunning()) {
+            $this->process->stop();
+        }
     }
 
     protected function getEnv(): array
@@ -90,5 +85,19 @@ class BackgroundServer
             'REDIS_HOST',
             'REDIS_PORT',
         ];
+    }
+
+    private function isRunning()
+    {
+        // Sanity check
+        $ch = curl_init('http://127.0.0.1:8000');
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+        curl_exec($ch);
+        $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return $httpStatus === 200;
     }
 }
