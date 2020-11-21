@@ -36,7 +36,7 @@ class BackgroundServer
             $this->process->stop();
         }
 
-        // The process that's still running is the subprocess. Let's kill that separately.
+        // The process that's still running is the subprocess. Let's kill that seperatly.
         $pid = trim(`ps aux --no-headings | grep ":8000" | grep -v grep | awk '{ print $2 }' | head -1`, "\n");
         if (is_numeric($pid)) {
             posix_kill($pid, 9);

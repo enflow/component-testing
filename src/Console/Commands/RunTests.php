@@ -53,22 +53,22 @@ class RunTests extends Command
             $this->info("");
         }
 
-//        // Ensure that the database.sqlite file exists & clear it if it does
-//        touch(base_path('database/database.sqlite'));
-//
-//        $filter = ($filter = $this->option('filter')) ? "--filter={$filter}" : null;
-//        $repeat = ($repeat = $this->option('repeat')) ? "--repeat={$repeat}" : null;
-//
-//        if (! $this->option('only-dusk')) {
-//            $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}");
-//        }
-//
-//        if ($this->shouldRunDuskTests()) {
-//            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}", [
-//                'APP_URL' => 'http://localhost:8000',
-//                'APP_DOMAIN' => 'localhost:8000',
-//            ]);
-//        }
+        // Ensure that the database.sqlite file exists & clear it if it does
+        touch(base_path('database/database.sqlite'));
+
+        $filter = ($filter = $this->option('filter')) ? "--filter={$filter}" : null;
+        $repeat = ($repeat = $this->option('repeat')) ? "--repeat={$repeat}" : null;
+
+        if (! $this->option('only-dusk')) {
+            $this->script("./vendor/bin/phpunit --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}");
+        }
+
+        if ($this->shouldRunDuskTests()) {
+            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}", [
+                'APP_URL' => 'http://localhost:8000',
+                'APP_DOMAIN' => 'localhost:8000',
+            ]);
+        }
     }
 
     private function script(string $script, array $env = []): void
