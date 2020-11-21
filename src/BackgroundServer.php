@@ -39,7 +39,7 @@ class BackgroundServer
         dump(`ps aux --headings | grep php`);
 
         // The process that's still running is the subprocess. Let's kill that seperatly.
-        $pid = trim(`ps aux --no-headings | grep ":8000" | grep -v grep | awk '{ print $2 }' | head -1`, "\n");
+        $pid = trim(`ps aux --no-headings | grep "php -S" | grep -v grep | awk '{ print $2 }' | head -1`, "\n");
         if (is_numeric($pid)) {
             dump('Killing ' . $pid);
             posix_kill($pid, 9);
@@ -95,7 +95,6 @@ class BackgroundServer
 
     private function isRunning()
     {
-        // Sanity check
         $ch = curl_init('http://127.0.0.1:8000');
         curl_setopt($ch, CURLOPT_TIMEOUT, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
