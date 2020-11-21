@@ -44,6 +44,8 @@ class RunTests extends Command
 
             $majorVersion = trim((Process::fromShellCommandline('/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1'))->mustRun()->getOutput(), "\n");
 
+            $this->info("");
+
             $this->info("Upgrading Dusk Chrome Driver to {$majorVersion}");
 
             $this->script("php artisan dusk:chrome-driver {$majorVersion}");
