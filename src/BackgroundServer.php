@@ -36,16 +36,11 @@ class BackgroundServer
             $this->process->stop();
         }
 
-        dump(`ps aux --headings | cat | grep php`);
-
         // The process that's still running is the subprocess. Let's kill that seperatly.
         $pid = trim(`ps aux --no-headings | cat | grep "php -S" | grep -v grep | awk '{ print $2 }' | head -1`, "\n");
         if (is_numeric($pid)) {
-            dump('Killing ' . $pid);
             posix_kill($pid, 9);
         }
-
-        dump(`ps aux --headings | cat | grep php`);
     }
 
     protected function getEnv(): array
