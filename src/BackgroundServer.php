@@ -3,52 +3,48 @@
 namespace Enflow\Component\Testing;
 
 use Exception;
+use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
 
 class BackgroundServer
 {
-    public $process;
-    private $pipes = [];
+    public Process $process;
 
     public function start()
     {
-        $this->process = proc_open("php -S 0.0.0.0:8000 -t public", [
-            ['pipe', 'r'],
-            ['pipe', 'w'], // stdout
-            ['pipe', 'w'], // stderr
-        ], $this->pipes, getcwd(), $this->getEnv());
+        $env = collect($this->getEnv())->join(' ');
 
-        stream_set_blocking($this->pipes[1], false);
-        stream_set_blocking($this->pipes[2], false);
+        $command = "env -i {$env} php -S 0.0.0.0:8000 -t public";
 
-        $status = proc_get_status($this->process);
-        if (empty($status['running'])) {
-            throw new Exception("PHP server must be running");
-        }
+        $this->process = Process::fromShellCommandline($command);
+        $this->process->setTty(Process::isTtySupported());
+        $this->process->disableOutput();
+        $this->process->start();
+
+        $tries = 0;
+        do {
+            // Sanity check
+            $ch = curl_init('http://127.0.0.1:8000');
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+            curl_exec($ch);
+            $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            $tries++;
+        } while ($httpStatus !== 200 && $tries < 100);
     }
 
     public function stop()
     {
-        $status = proc_get_status($this->process);
-        if (empty($status['running'])) {
-            throw new Exception("PHP server must be running");
+        $pid = `ps aux --no-headings | grep "0.0.0.0:8000" | grep -v grep | awk '{ print $2 }' | head -1`;
+
+        if (is_numeric($pid)) {
+            posix_kill($pid, 9);
         }
 
-        //close all pipes that are still open
-        fclose($this->pipes[1]); //stdout
-        fclose($this->pipes[2]); //stderr
-
-        //get the parent pid of the process we want to kill
-        $ppid = $status['pid'];
-
-        //use ps to get all the children of this process, and kill them
-        $pids = preg_split('/\s+/', `ps -o pid --no-heading --ppid $ppid`);
-        foreach ($pids as $pid) {
-            if (is_numeric($pid)) {
-                posix_kill($pid, 9); //9 is the SIGKILL signal
-            }
-        }
-
-        proc_close($this->process);
+        $this->process->stop();
     }
 
     protected function getEnv(): array

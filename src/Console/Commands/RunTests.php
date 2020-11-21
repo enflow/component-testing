@@ -62,7 +62,7 @@ class RunTests extends Command
         }
 
         if ($this->shouldRunDuskTests()) {
-            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox {$filter} {$repeat}", [
+            $this->script("php artisan dusk --cache-result --order-by=defects --stop-on-failure --testdox -vvv {$filter} {$repeat}", [
                 'APP_URL' => 'http://localhost:8000',
                 'APP_DOMAIN' => 'localhost:8000',
             ]);

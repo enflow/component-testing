@@ -12,7 +12,8 @@
         "php": "^7.4",
         "laravel/framework": ">=5.4",
         "ext-posix": "*",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-curl": "*"
     },
     "autoload": {
         "psr-4": {
