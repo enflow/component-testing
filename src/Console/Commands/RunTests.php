@@ -31,6 +31,9 @@ class RunTests extends Command
 
     private function runTests(): void
     {
+        // Issues:
+        // - Getting MySQL connection still while there is a .env.dusk file defined? Check if your .env doesn't specify the DB_CONNECTION variable.
+
         // Dump out debug info
         if ($this->getOutput()->isVerbose() || env('CI')) {
             $this->dumpDebugInfo();
